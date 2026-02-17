@@ -495,7 +495,9 @@
             flex-direction: row-reverse;
         }
 
-        .header-right h1 {
+        .header-right h1,
+        .header-right .date,
+        .header-right .progress-text {
             text-align: right;
         }
 
@@ -658,13 +660,12 @@
         <div class="panel panel-right">
             <div class="header header-right">
                 <div class="header-top">
-                    <div class="header-controls">
-                    </div>
-                    <div class="header-title" style="text-align: right;">
+                    <div class="header-controls"></div>
+                    <div class="header-title">
                         <h1>Tomorrow</h1>
                     </div>
                 </div>
-                <div class="date" id="tomorrow-date" style="text-align: right;"></div>
+                <div class="date" id="tomorrow-date"></div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="tomorrow-progress" style="width: 0%"></div>
                 </div>
