@@ -1,11 +1,10 @@
 const CACHE_NAME = 'it-can-wait-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  '/it-can-wait/',
+  '/it-can-wait/index.html',
+  '/it-can-wait/manifest.json'
 ];
 
-// Install service worker and cache files
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -13,18 +12,13 @@ self.addEventListener('install', event => {
   );
 });
 
-// Serve cached content when offline
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
-      .then(response => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
-      })
+      .then(response => response || fetch(event.request))
   );
 });
 
-// Clean up old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
