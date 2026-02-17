@@ -1,4 +1,4 @@
-const CACHE_NAME = 'it-can-wait-v1';
+const CACHE_NAME = 'it-can-wait-v2';
 const urlsToCache = [
   '/it-can-wait/',
   '/it-can-wait/index.html',
