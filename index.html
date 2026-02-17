@@ -620,18 +620,28 @@
             const div = document.createElement('div');
             div.className = 'entry' + (entry.completed ? ' completed' : '');
             div.dataset.id = entry.id;
-            div.draggable = !isArchived;
+            div.draggable = false;
 
             if (!isArchived) {
                 const h = document.createElement('div');
                 h.className = 'drag-handle';
                 h.innerHTML = '<span></span><span></span><span></span>';
+
+                // Only make draggable when touching the handle
+                h.addEventListener('pointerdown', () => {
+                    div.draggable = true;
+                });
+                div.addEventListener('dragend', () => {
+                    div.draggable = false;
+                    div.classList.remove('dragging');
+                });
+
                 div.appendChild(h);
             }
 
             const cb = document.createElement('div');
             cb.className = 'checkbox' + (entry.completed ? ' checked' : '');
-            if (!isArchived) cb.onclick = () => toggle(entry.id, day);
+            if (!isArchived) cb.addEventListener('click', e => { e.stopPropagation(); toggle(entry.id, day); });
             div.appendChild(cb);
 
             const content = document.createElement('div');
@@ -664,14 +674,14 @@
                 const swap = document.createElement('button');
                 swap.className = 'btn';
                 swap.textContent = day === 'today' ? '→' : '←';
-                swap.onclick = () => swapEntry(entry.id, day);
+                swap.addEventListener('click', e => { e.stopPropagation(); swapEntry(entry.id, day); });
                 actions.appendChild(swap);
             }
 
             const del = document.createElement('button');
             del.className = 'btn danger';
             del.textContent = '×';
-            del.onclick = () => isArchived ? deleteArchived(entry.id) : deleteEntry(entry.id, day);
+            del.addEventListener('click', e => { e.stopPropagation(); isArchived ? deleteArchived(entry.id) : deleteEntry(entry.id, day); });
             actions.appendChild(del);
 
             div.appendChild(actions);
@@ -681,7 +691,6 @@
                     draggedId = entry.id; draggedDay = day;
                     div.classList.add('dragging');
                 });
-                div.addEventListener('dragend', () => div.classList.remove('dragging'));
                 div.addEventListener('dragover', e => e.preventDefault());
                 div.addEventListener('drop', e => {
                     e.stopPropagation();
