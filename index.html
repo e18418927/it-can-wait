@@ -490,7 +490,82 @@
 
         .entries::-webkit-scrollbar { width: 0; }
 
-        /* Accent color picker */
+        /* Right-aligned Tomorrow header */
+        .header-right .header-top {
+            flex-direction: row-reverse;
+        }
+
+        .header-right h1 {
+            text-align: right;
+        }
+
+        /* Centered manage button row */
+        .header-manage-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .manage-btn {
+            background: none;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 16px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: inherit;
+            font-weight: 500;
+            color: var(--md-sys-color-outline);
+            letter-spacing: 0.08em;
+            transition: all 0.2s ease;
+            text-transform: lowercase;
+        }
+
+        .manage-btn:active {
+            background: var(--md-sys-color-surface-container-highest);
+            color: var(--md-sys-color-on-surface);
+        }
+
+        /* Manage action buttons inside bottom sheet */
+        .manage-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--md-sys-color-surface-container-highest);
+            border: none;
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .manage-action-btn:active {
+            background: var(--md-sys-color-primary-container);
+            transform: scale(0.98);
+        }
+
+        .manage-action-icon {
+            font-size: 22px;
+            width: 32px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .manage-action-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
+            font-family: inherit;
+        }
+
+        .manage-action-sub {
+            font-size: 12px;
+            color: var(--md-sys-color-outline);
+            margin-top: 2px;
+            font-family: inherit;
+        }
         .color-picker-wrap {
             position: relative;
             display: flex;
@@ -548,8 +623,6 @@
                         <h1>Today</h1>
                     </div>
                     <div class="header-controls">
-                        <button class="header-btn" id="today-archive-toggle">archive</button>
-                        <button class="header-btn" id="today-clear-btn">clear</button>
                         <div class="color-picker-wrap">
                             <div class="color-swatch" title="Accent color">
                                 <input type="color" id="accent-color-picker" value="#006491">
@@ -563,6 +636,9 @@
                     <div class="progress-fill" id="today-progress" style="width: 0%"></div>
                 </div>
                 <div class="progress-text" id="today-progress-text">0 of 0 completed</div>
+                <div class="header-manage-row">
+                    <button class="manage-btn" id="today-manage-btn">manage</button>
+                </div>
             </div>
             <div class="add-entry">
                 <form id="today-form">
@@ -579,22 +655,23 @@
         </div>
 
         <!-- Tomorrow Panel -->
-        <div class="panel">
-            <div class="header">
+        <div class="panel panel-right">
+            <div class="header header-right">
                 <div class="header-top">
+                    <div class="header-controls">
+                    </div>
                     <div class="header-title">
                         <h1>Tomorrow</h1>
                     </div>
-                    <div class="header-controls">
-                        <button class="header-btn" id="tomorrow-archive-toggle">archive</button>
-                        <button class="header-btn" id="tomorrow-clear-btn">clear</button>
-                    </div>
                 </div>
-                <div class="date" id="tomorrow-date"></div>
+                <div class="date" id="tomorrow-date" style="text-align: right;"></div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="tomorrow-progress" style="width: 0%"></div>
                 </div>
                 <div class="progress-text" id="tomorrow-progress-text">0 of 0 completed</div>
+                <div class="header-manage-row">
+                    <button class="manage-btn" id="tomorrow-manage-btn">manage</button>
+                </div>
             </div>
             <div class="add-entry">
                 <form id="tomorrow-form">
@@ -615,6 +692,32 @@
                 <button class="close-archive" id="close-archive">✕</button>
             </div>
             <div class="archive-entries" id="archive-entries"></div>
+        </div>
+    </div>
+
+    <!-- Manage Bottom Sheet -->
+    <div class="archive-modal" id="manage-modal">
+        <div class="archive-content">
+            <div class="archive-handle"></div>
+            <div class="archive-header">
+                <h2 id="manage-title">manage</h2>
+            </div>
+            <div style="padding: 0 16px 32px; display: flex; flex-direction: column; gap: 10px;">
+                <button class="manage-action-btn" id="manage-archive-btn">
+                    <span class="manage-action-icon">📦</span>
+                    <div class="manage-action-text">
+                        <div class="manage-action-label">view archive</div>
+                        <div class="manage-action-sub">browse completed tasks</div>
+                    </div>
+                </button>
+                <button class="manage-action-btn" id="manage-clear-btn">
+                    <span class="manage-action-icon">✓</span>
+                    <div class="manage-action-text">
+                        <div class="manage-action-label">clear completed</div>
+                        <div class="manage-action-sub">move done tasks to archive</div>
+                    </div>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -977,13 +1080,40 @@
                 localStorage.setItem('fold-notes-accent', e.target.value);
             });
 
-            // Setup archive toggles
-            document.getElementById('today-archive-toggle').addEventListener('click', () => showArchive('today'));
-            document.getElementById('tomorrow-archive-toggle').addEventListener('click', () => showArchive('tomorrow'));
+            // Setup manage buttons
+            let activeManageDay = null;
 
-            // Setup clear buttons
-            document.getElementById('today-clear-btn').addEventListener('click', () => archiveCompleted('today'));
-            document.getElementById('tomorrow-clear-btn').addEventListener('click', () => archiveCompleted('tomorrow'));
+            document.getElementById('today-manage-btn').addEventListener('click', () => {
+                activeManageDay = 'today';
+                document.getElementById('manage-title').textContent = 'today — manage';
+                document.getElementById('manage-modal').classList.add('active');
+            });
+
+            document.getElementById('tomorrow-manage-btn').addEventListener('click', () => {
+                activeManageDay = 'tomorrow';
+                document.getElementById('manage-title').textContent = 'tomorrow — manage';
+                document.getElementById('manage-modal').classList.add('active');
+            });
+
+            document.getElementById('manage-archive-btn').addEventListener('click', () => {
+                document.getElementById('manage-modal').classList.remove('active');
+                if (activeManageDay) showArchive(activeManageDay);
+            });
+
+            document.getElementById('manage-clear-btn').addEventListener('click', () => {
+                document.getElementById('manage-modal').classList.remove('active');
+                if (activeManageDay) archiveCompleted(activeManageDay);
+            });
+
+            document.getElementById('manage-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'manage-modal') {
+                    document.getElementById('manage-modal').classList.remove('active');
+                }
+            });
+
+            // Setup archive toggles (kept for archive modal close)
+            document.getElementById('today-archive-toggle') && document.getElementById('today-archive-toggle').addEventListener('click', () => showArchive('today'));
+            document.getElementById('tomorrow-archive-toggle') && document.getElementById('tomorrow-archive-toggle').addEventListener('click', () => showArchive('tomorrow'));
 
             // Setup archive modal close
             document.getElementById('close-archive').addEventListener('click', closeArchive);
