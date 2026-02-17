@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A minimalistic task manager for today and tomorrow">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="It Can Wait">
+    <link rel="manifest" href="/manifest.json">
+    <title>It Can Wait</title>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e8e8e8;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
+            --complete-color: #10b981;
+            --delete-color: #ef4444;
+            --shadow: rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #242424;
+            --text-primary: #e0e0e0;
+            --text-secondary: #999999;
+            --border-color: #333333;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --complete-color: #10b981;
+            --delete-color: #ef4444;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            gap: 0;
+            background: var(--border-color);
+            position: relative;
+        }
+
+        .divider {
+            background: var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: visible;
+        }
+
+        .divider-text {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            letter-spacing: 0.5em;
+            text-transform: lowercase;
+            position: absolute;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px 20px 15px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .header-btn:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .header .date {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar {
+            margin-top: 12px;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--complete-color);
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .archive-toggle {
+            position: absolute;
+            top: 20px;
+            right: 80px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .archive-toggle:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .archive-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .archive-modal.active {
+            display: flex;
+        }
+
+        .archive-content {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px var(--shadow);
+        }
+
+        .archive-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .archive-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .close-archive {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .close-archive:hover {
+            background: var(--delete-color);
+            color: white;
+            border-color: var(--delete-color);
+        }
+
+        .archive-entries {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .add-entry {
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .add-entry form {
+            margin: 0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-entry input {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .add-entry input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .add-entry input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .add-btn {
+            padding: 12px 20px;
+            background: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .add-btn:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        .add-btn:active {
+            transform: scale(0.98);
+        }
+
+        .entries {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .entry {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            cursor: move;
+        }
+
+        .entry:hover {
+            border-color: var(--accent-color);
+        }
+
+        .entry.completed {
+            opacity: 0.5;
+        }
+
+        .entry.completed .entry-text {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .entry.dragging {
+            opacity: 0.4;
+        }
+
+        .drag-handle {
+            width: 20px;
+            min-width: 20px;
+            height: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2px;
+            cursor: grab;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+            opacity: 0.8;
+        }
+
+        .drag-handle span {
+            width: 12px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 1px;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .checkbox:hover {
+            border-color: var(--complete-color);
+        }
+
+        .checkbox.checked {
+            background: var(--complete-color);
+            border-color: var(--complete-color);
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .entry-text {
+            flex: 1;
+            font-size: 15px;
+            word-break: break-word;
+            color: var(--text-primary);
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn {
+            padding: 6px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .btn:hover {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn.danger:hover {
+            background: var(--delete-color);
+            border-color: var(--delete-color);
+        }
+
+        .entries::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .entries::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        .entries::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .entries::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Vertical layout for folded phone (narrow screen) */
+        @media (max-width: 600px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .divider {
+                width: 100%;
+                height: 20px;
+                min-height: 20px;
+            }
+
+            .divider-text {
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        /* Horizontal layout for unfolded phone (wide screen) */
+        @media (min-width: 601px) {
+            .container {
+                flex-direction: row;
+            }
+
+            .divider {
+                width: 20px;
+                min-width: 20px;
+                height: 100%;
+            }
+
+            .divider-text {
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%) rotate(-90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Today Panel -->
+        <div class="panel">
+            <div class="header">
+                <div class="header-top">
+                    <div class="header-title">
+                        <h1>Today</h1>
+                    </div>
+                    <div class="header-controls">
+                        <button class="header-btn" id="today-archive-toggle">archive</button>
+                        <button class="header-btn" id="today-clear-btn">clear</button>
+                        <button class="header-btn" id="theme-toggle">☀️</button>
+                    </div>
+                </div>
+                <div class="date" id="today-date"></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="today-progress" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="today-progress-text">0 of 0 completed</div>
+            </div>
+            <div class="add-entry">
+                <form id="today-form">
+                    <input type="text" id="today-input" placeholder="Add a task..." autocomplete="off">
+                    <button type="submit" class="add-btn">add</button>
+                </form>
+            </div>
+            <div class="entries" id="today-entries"></div>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider">
+            <div class="divider-text">it can wait</div>
+        </div>
+
+        <!-- Tomorrow Panel -->
+        <div class="panel">
+            <div class="header">
+                <div class="header-top">
+                    <div class="header-title">
+                        <h1>Tomorrow</h1>
+                    </div>
+                    <div class="header-controls">
+                        <button class="header-btn" id="tomorrow-archive-toggle">archive</button>
+                        <button class="header-btn" id="tomorrow-clear-btn">clear</button>
+                    </div>
+                </div>
+                <div class="date" id="tomorrow-date"></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="tomorrow-progress" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="tomorrow-progress-text">0 of 0 completed</div>
+            </div>
+            <div class="add-entry">
+                <form id="tomorrow-form">
+                    <input type="text" id="tomorrow-input" placeholder="Add a task..." autocomplete="off">
+                    <button type="submit" class="add-btn">add</button>
+                </form>
+            </div>
+            <div class="entries" id="tomorrow-entries"></div>
+        </div>
+    </div>
+
+    <!-- Archive Modal -->
+    <div class="archive-modal" id="archive-modal">
+        <div class="archive-content">
+            <div class="archive-header">
+                <h2 id="archive-title">Archive</h2>
+                <button class="close-archive" id="close-archive">✕</button>
+            </div>
+            <div class="archive-entries" id="archive-entries"></div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure to hold entries
+        let data = {
+            today: [],
+            tomorrow: [],
+            archived: {
+                today: [],
+                tomorrow: []
+            }
+        };
+
+        // Load data from localStorage
+        function loadData() {
+            const saved = localStorage.getItem('fold-notes-data');
+            if (saved) {
+                try {
+                    data = JSON.parse(saved);
+                    // Ensure archived property exists for backward compatibility
+                    if (!data.archived) {
+                        data.archived = { today: [], tomorrow: [] };
+                    }
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                    data = { today: [], tomorrow: [], archived: { today: [], tomorrow: [] } };
+                }
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('fold-notes-data', JSON.stringify(data));
+        }
+
+        // Format date
+        function formatDate(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // Format timestamp
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        }
+
+        // Update date displays
+        function updateDates() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            document.getElementById('today-date').textContent = formatDate(today);
+            document.getElementById('tomorrow-date').textContent = formatDate(tomorrow);
+        }
+
+        // Create entry element
+        function createEntryElement(entry, day, isArchived = false) {
+            const entryDiv = document.createElement('div');
+            entryDiv.className = `entry ${entry.completed ? 'completed' : ''}`;
+            entryDiv.draggable = !isArchived;
+            entryDiv.dataset.id = entry.id;
+
+            // Drag handle
+            const dragHandle = document.createElement('div');
+            dragHandle.className = 'drag-handle';
+            dragHandle.innerHTML = '<span></span><span></span><span></span>';
+
+            // Checkbox
+            const checkbox = document.createElement('div');
+            checkbox.className = `checkbox ${entry.completed ? 'checked' : ''}`;
+            if (!isArchived) {
+                checkbox.onclick = () => toggleComplete(entry.id, day);
+            }
+
+            // Entry text container
+            const textContainer = document.createElement('div');
+            textContainer.style.flex = '1';
+
+            const textDiv = document.createElement('div');
+            textDiv.className = 'entry-text';
+            textDiv.textContent = entry.text;
+
+            // Timestamps
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'timestamp';
+            const createdText = `Created ${formatTimestamp(entry.createdAt)}`;
+            const completedText = entry.completedAt ? ` • Completed ${formatTimestamp(entry.completedAt)}` : '';
+            timestampDiv.textContent = createdText + completedText;
+
+            textContainer.appendChild(textDiv);
+            textContainer.appendChild(timestampDiv);
+
+            // Actions
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'entry-actions';
+
+            if (!isArchived) {
+                // Swap button
+                const swapBtn = document.createElement('button');
+                swapBtn.className = 'btn';
+                swapBtn.textContent = day === 'today' ? '→' : '←';
+                swapBtn.onclick = () => swapEntry(entry.id, day);
+                actionsDiv.appendChild(swapBtn);
+            }
+
+            // Delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn danger';
+            deleteBtn.textContent = '×';
+            deleteBtn.onclick = () => isArchived ? deleteArchivedEntry(entry.id, day) : deleteEntry(entry.id, day);
+            actionsDiv.appendChild(deleteBtn);
+
+            if (!isArchived) {
+                entryDiv.appendChild(dragHandle);
+            }
+            entryDiv.appendChild(checkbox);
+            entryDiv.appendChild(textContainer);
+            entryDiv.appendChild(actionsDiv);
+
+            // Add drag event listeners for non-archived items
+            if (!isArchived) {
+                entryDiv.addEventListener('dragstart', (e) => handleDragStart(e, day));
+                entryDiv.addEventListener('dragend', handleDragEnd);
+                entryDiv.addEventListener('dragover', handleDragOver);
+                entryDiv.addEventListener('drop', (e) => handleDrop(e, day));
+            }
+
+            return entryDiv;
+        }
+
+        // Render entries
+        function render() {
+            const todayContainer = document.getElementById('today-entries');
+            const tomorrowContainer = document.getElementById('tomorrow-entries');
+
+            todayContainer.innerHTML = '';
+            tomorrowContainer.innerHTML = '';
+
+            data.today.forEach(entry => {
+                todayContainer.appendChild(createEntryElement(entry, 'today'));
+            });
+
+            data.tomorrow.forEach(entry => {
+                tomorrowContainer.appendChild(createEntryElement(entry, 'tomorrow'));
+            });
+
+            // Update progress bars
+            updateProgress('today');
+            updateProgress('tomorrow');
+        }
+
+        // Update progress bar for a day
+        function updateProgress(day) {
+            const total = data[day].length;
+            const completed = data[day].filter(e => e.completed).length;
+            const percentage = total > 0 ? (completed / total) * 100 : 0;
+
+            const progressBar = document.getElementById(`${day}-progress`);
+            const progressText = document.getElementById(`${day}-progress-text`);
+
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${completed} of ${total} completed`;
+        }
+
+        // Add entry
+        function addEntry(day) {
+            const input = document.getElementById(`${day}-input`);
+            const text = input.value.trim();
+
+            if (text) {
+                const entry = {
+                    id: Date.now(),
+                    text: text,
+                    completed: false,
+                    createdAt: Date.now(),
+                    completedAt: null
+                };
+
+                data[day].push(entry);
+                input.value = '';
+                saveData();
+                render();
+            }
+        }
+
+        // Toggle complete
+        function toggleComplete(id, day) {
+            const entry = data[day].find(e => e.id === id);
+            if (entry) {
+                entry.completed = !entry.completed;
+                entry.completedAt = entry.completed ? Date.now() : null;
+                saveData();
+                render();
+            }
+        }
+
+        // Swap entry between days
+        function swapEntry(id, fromDay) {
+            const toDay = fromDay === 'today' ? 'tomorrow' : 'today';
+            const entryIndex = data[fromDay].findIndex(e => e.id === id);
+
+            if (entryIndex !== -1) {
+                const entry = data[fromDay].splice(entryIndex, 1)[0];
+                data[toDay].push(entry);
+                saveData();
+                render();
+            }
+        }
+
+        // Drag and drop handlers
+        let draggedElement = null;
+        let draggedId = null;
+        let draggedDay = null;
+
+        function handleDragStart(e, day) {
+            draggedElement = e.target;
+            draggedId = parseInt(e.target.dataset.id);
+            draggedDay = day;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e, day) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            if (draggedElement !== e.currentTarget && draggedDay === day) {
+                const dropTargetId = parseInt(e.currentTarget.dataset.id);
+                const draggedIndex = data[day].findIndex(e => e.id === draggedId);
+                const dropIndex = data[day].findIndex(e => e.id === dropTargetId);
+
+                if (draggedIndex !== -1 && dropIndex !== -1) {
+                    // Remove dragged item
+                    const [draggedItem] = data[day].splice(draggedIndex, 1);
+                    // Insert at new position
+                    data[day].splice(dropIndex, 0, draggedItem);
+                    saveData();
+                    render();
+                }
+            }
+
+            return false;
+        }
+
+        // Delete entry
+        function deleteEntry(id, day) {
+            data[day] = data[day].filter(e => e.id !== id);
+            saveData();
+            render();
+        }
+
+        // Archive completed entries
+        function archiveCompleted(day) {
+            const completed = data[day].filter(e => e.completed);
+            if (completed.length > 0) {
+                data.archived[day].push(...completed);
+                data[day] = data[day].filter(e => !e.completed);
+                saveData();
+                render();
+            }
+        }
+
+        // Show archive modal
+        function showArchive(day) {
+            const modal = document.getElementById('archive-modal');
+            const title = document.getElementById('archive-title');
+            const container = document.getElementById('archive-entries');
+
+            title.textContent = `Archive - ${day.charAt(0).toUpperCase() + day.slice(1)}`;
+            container.innerHTML = '';
+
+            if (data.archived[day].length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.style.padding = '40px 20px';
+                emptyMsg.style.color = 'var(--text-secondary)';
+                emptyMsg.textContent = 'No archived items';
+                container.appendChild(emptyMsg);
+            } else {
+                data.archived[day].forEach(entry => {
+                    container.appendChild(createEntryElement(entry, day, true));
+                });
+            }
+
+            modal.classList.add('active');
+            modal.dataset.currentDay = day;
+        }
+
+        // Close archive modal
+        function closeArchive() {
+            const modal = document.getElementById('archive-modal');
+            modal.classList.remove('active');
+        }
+
+        // Delete archived entry
+        function deleteArchivedEntry(id, day) {
+            data.archived[day] = data.archived[day].filter(e => e.id !== id);
+            saveData();
+            showArchive(day); // Refresh the archive view
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load theme preference
+            const savedTheme = localStorage.getItem('fold-notes-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+
+            loadData();
+            updateDates();
+            
+            // Setup theme toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('fold-notes-theme', newTheme);
+                updateThemeIcon(newTheme);
+            });
+
+            // Setup archive toggles
+            document.getElementById('today-archive-toggle').addEventListener('click', () => showArchive('today'));
+            document.getElementById('tomorrow-archive-toggle').addEventListener('click', () => showArchive('tomorrow'));
+
+            // Setup clear buttons
+            document.getElementById('today-clear-btn').addEventListener('click', () => archiveCompleted('today'));
+            document.getElementById('tomorrow-clear-btn').addEventListener('click', () => archiveCompleted('tomorrow'));
+
+            // Setup archive modal close
+            document.getElementById('close-archive').addEventListener('click', closeArchive);
+            document.getElementById('archive-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'archive-modal') {
+                    closeArchive();
+                }
+            });
+
+            // Setup form handlers
+            const todayForm = document.getElementById('today-form');
+            const tomorrowForm = document.getElementById('tomorrow-form');
+            
+            if (todayForm) {
+                todayForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    addEntry('today');
+                });
+            }
+
+            if (tomorrowForm) {
+                tomorrowForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    addEntry('tomorrow');
+                });
+            }
+            
+            render();
+        });
+
+        // Update theme toggle icon
+        function updateThemeIcon(theme) {
+            const themeToggle = document.getElementById('theme-toggle');
+            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        // Update dates at midnight
+        setInterval(() => {
+            const now = new Date();
+            if (now.getHours() === 0 && now.getMinutes() === 0) {
+                updateDates();
+            }
+        }, 60000);
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => console.log('Service Worker registered'))
+                .catch(error => console.log('Service Worker registration failed:', error));
+        }
+    </script>
+</body>
+</html>
