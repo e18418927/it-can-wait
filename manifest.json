@@ -5,9 +5,10 @@
   "start_url": "/it-can-wait/",
   "scope": "/it-can-wait/",
   "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
   "background_color": "#111111",
   "theme_color": "#2563eb",
-  "orientation": "any",
+  "orientation": "natural",
   "lang": "en",
   "categories": ["productivity", "utilities"],
   "icons": [
