@@ -309,43 +309,37 @@
 
         .fab-main:active { transform: scale(0.93); }
 
-        /* ── Add task panel (slides up from bottom) ── */
+        /* ── Add task panel ── */
         .add-panel-overlay {
             display: none;
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.4);
             z-index: 200;
-            align-items: flex-end;
+            align-items: center;
             justify-content: center;
+            padding: 24px;
         }
 
         .add-panel-overlay.active { display: flex; }
 
         .add-panel {
             background: var(--surface-c);
-            border-radius: 28px 28px 0 0;
+            border-radius: 28px;
             width: 100%;
-            max-width: 700px;
-            padding: 0 0 12px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-            animation: slideUp 0.25s cubic-bezier(0.4,0,0.2,1);
+            max-width: 500px;
+            padding: 0 0 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            animation: scaleIn 0.2s cubic-bezier(0.4,0,0.2,1);
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .add-panel-handle {
-            width: 32px; height: 4px;
-            background: var(--outline-v);
-            border-radius: 2px;
-            margin: 12px auto 16px;
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         .add-panel-input-row {
-            padding: 0 16px 14px;
+            padding: 20px 16px 14px;
         }
 
         .add-panel-input {
@@ -549,7 +543,6 @@
     <!-- Add task panel -->
     <div class="add-panel-overlay" id="add-panel-overlay">
         <div class="add-panel">
-            <div class="add-panel-handle"></div>
             <div class="add-panel-input-row">
                 <input class="add-panel-input" id="task-input" type="text" placeholder="what can wait?" autocomplete="off">
             </div>
