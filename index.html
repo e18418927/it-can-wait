@@ -460,10 +460,15 @@
 
         /* ── Backdrop (for FAB) ── */
         #fab-backdrop {
-            display: none;
+            display: block;
             position: fixed;
             inset: 0;
             z-index: 99;
+            pointer-events: none;
+        }
+
+        #fab-backdrop.active {
+            pointer-events: all;
         }
 
         /* ── Media queries ── */
@@ -801,14 +806,14 @@
             fabOpen = true;
             document.getElementById('fab-dial').classList.add('open');
             document.getElementById('fab-main').textContent = '×';
-            document.getElementById('fab-backdrop').style.display = 'block';
+            document.getElementById('fab-backdrop').classList.add('active');
         }
 
         function closeFab() {
             fabOpen = false;
             document.getElementById('fab-dial').classList.remove('open');
             document.getElementById('fab-main').textContent = '＋';
-            document.getElementById('fab-backdrop').style.display = 'none';
+            document.getElementById('fab-backdrop').classList.remove('active');
         }
 
         // ── Add panel ──
