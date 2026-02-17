@@ -296,6 +296,25 @@
             height: 100%;
         }
 
+        .fab-bottom-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fab-settings {
+            width: 44px; height: 44px;
+            background: var(--surface-chh);
+            color: var(--on-surface-v);
+            border: none; border-radius: 14px;
+            font-size: 18px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow);
+            transition: all 0.15s;
+        }
+
+        .fab-settings:active { background: var(--primary-container); transform: scale(0.92); }
+
         .fab-main {
             width: 64px; height: 64px;
             background: var(--primary);
@@ -535,7 +554,10 @@
             </div>
 
         </div>
-        <button class="fab-main" id="fab-main">＋</button>
+        <div class="fab-bottom-row">
+            <button class="fab-settings" id="fab-settings">⚙️</button>
+            <button class="fab-main" id="fab-main">＋</button>
+        </div>
     </div>
 
     <div id="fab-backdrop"></div>
@@ -804,8 +826,6 @@
         }
 
         // ── Touch drag-to-reorder ──
-        let dragState = null;
-
         function startDrag(e, div, id, day) {
             e.preventDefault();
             const touch = e.touches[0];
@@ -894,18 +914,16 @@
 
             loadData(); updateDates(); render();
 
-            // FAB toggle — tap + opens add panel, when dial is open + closes it
+            // FAB main — always opens add panel
             document.getElementById('fab-main').addEventListener('click', () => {
-                if (fabOpen) { closeFab(); } else { openAddPanel(); }
+                if (fabOpen) closeFab();
+                openAddPanel();
             });
 
-            // Long-press FAB to open dial
-            let fabTimer;
-            document.getElementById('fab-main').addEventListener('pointerdown', () => {
-                fabTimer = setTimeout(() => { openFab(); }, 400);
+            // Settings button — opens dial
+            document.getElementById('fab-settings').addEventListener('click', () => {
+                if (fabOpen) { closeFab(); } else { openFab(); }
             });
-            document.getElementById('fab-main').addEventListener('pointerup', () => clearTimeout(fabTimer));
-            document.getElementById('fab-main').addEventListener('pointercancel', () => clearTimeout(fabTimer));
 
             document.getElementById('fab-backdrop').addEventListener('click', closeFab);
 
