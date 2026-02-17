@@ -614,27 +614,20 @@
             document.getElementById('tomorrow-date').textContent = formatDate(m);
         }
 
-        let draggedId = null, draggedDay = null;
+        let dragState = null;
 
         function makeEntry(entry, day, isArchived = false) {
             const div = document.createElement('div');
             div.className = 'entry' + (entry.completed ? ' completed' : '');
             div.dataset.id = entry.id;
-            div.draggable = false;
 
             if (!isArchived) {
                 const h = document.createElement('div');
                 h.className = 'drag-handle';
                 h.innerHTML = '<span></span><span></span><span></span>';
 
-                // Only make draggable when touching the handle
-                h.addEventListener('pointerdown', () => {
-                    div.draggable = true;
-                });
-                div.addEventListener('dragend', () => {
-                    div.draggable = false;
-                    div.classList.remove('dragging');
-                });
+                // Touch-based drag from handle only
+                h.addEventListener('touchstart', e => startDrag(e, div, entry.id, day), { passive: false });
 
                 div.appendChild(h);
             }
@@ -685,25 +678,7 @@
             actions.appendChild(del);
 
             div.appendChild(actions);
-
-            if (!isArchived) {
-                div.addEventListener('dragstart', () => {
-                    draggedId = entry.id; draggedDay = day;
-                    div.classList.add('dragging');
-                });
-                div.addEventListener('dragover', e => e.preventDefault());
-                div.addEventListener('drop', e => {
-                    e.stopPropagation();
-                    if (draggedId === entry.id || draggedDay !== day) return;
-                    const fi = data[day].findIndex(x => x.id === draggedId);
-                    const ti = data[day].findIndex(x => x.id === entry.id);
-                    if (fi !== -1 && ti !== -1) {
-                        const [item] = data[day].splice(fi, 1);
-                        data[day].splice(ti, 0, item);
-                        saveData(); render();
-                    }
-                });
-            }
+            return div;
 
             return div;
         }
@@ -826,6 +801,81 @@
 
         function closeAddPanel() {
             document.getElementById('add-panel-overlay').classList.remove('active');
+        }
+
+        // ── Touch drag-to-reorder ──
+        let dragState = null;
+
+        function startDrag(e, div, id, day) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = div.getBoundingClientRect();
+
+            // Create a floating clone
+            const clone = div.cloneNode(true);
+            clone.style.cssText = `
+                position: fixed;
+                left: ${rect.left}px;
+                top: ${rect.top}px;
+                width: ${rect.width}px;
+                opacity: 0.85;
+                pointer-events: none;
+                z-index: 500;
+                border-radius: 16px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+                transition: none;
+            `;
+            document.body.appendChild(clone);
+            div.classList.add('dragging');
+
+            dragState = {
+                id, day, div, clone,
+                offsetY: touch.clientY - rect.top,
+                offsetX: touch.clientX - rect.left
+            };
+
+            document.addEventListener('touchmove', onDragMove, { passive: false });
+            document.addEventListener('touchend', onDragEnd);
+        }
+
+        function onDragMove(e) {
+            if (!dragState) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const { clone, offsetX, offsetY } = dragState;
+
+            clone.style.left = (touch.clientX - offsetX) + 'px';
+            clone.style.top = (touch.clientY - offsetY) + 'px';
+
+            // Find which entry we're hovering over
+            clone.style.display = 'none';
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            clone.style.display = '';
+
+            const target = el && el.closest('.entry');
+            if (target && target !== dragState.div) {
+                const targetId = parseInt(target.dataset.id);
+                const { day } = dragState;
+                const fi = data[day].findIndex(x => x.id === dragState.id);
+                const ti = data[day].findIndex(x => x.id === targetId);
+                if (fi !== -1 && ti !== -1 && fi !== ti) {
+                    const [item] = data[day].splice(fi, 1);
+                    data[day].splice(ti, 0, item);
+                    saveData(); render();
+                    // Re-find the moved div after render
+                    dragState.div = document.querySelector(`.entry[data-id="${dragState.id}"]`);
+                    if (dragState.div) dragState.div.classList.add('dragging');
+                }
+            }
+        }
+
+        function onDragEnd() {
+            if (!dragState) return;
+            dragState.clone.remove();
+            if (dragState.div) dragState.div.classList.remove('dragging');
+            dragState = null;
+            document.removeEventListener('touchmove', onDragMove);
+            document.removeEventListener('touchend', onDragEnd);
         }
 
         // ── Init ──
